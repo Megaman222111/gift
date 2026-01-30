@@ -1982,7 +1982,7 @@ function tick() {
 openDialogue("Welcome!", [
   "This little game-type thing is my digital love letter to you",
   "Click objects around the room to see why I love you so much.",
-  "Move: WASD / Arrows • Click objects • Close dialogue: Click / Space / Esc"
+  "Move: WASD / Arrows • Click objects • Close dialogue: Space / Esc"
 ]);
 
 tick();
