@@ -44,6 +44,29 @@ function nowMs() {
   return performance.now();
 }
 
+function getCookie(name) {
+  const parts = (`; ${document.cookie}`).split(`; ${name}=`);
+  return parts.length === 2 ? parts[1].split(";")[0].trim() : "";
+}
+
+function valentinesUnlocked() {
+  return getCookie("neyali_valentines_yes") === "1";
+}
+
+/** Set to true to test the Valentine's door and world without it being Feb 14. */
+const VALENTINES_DEBUG_UNLOCK = false;
+
+/** Door unlocks on Feb 14 (user's local date) or later (or when VALENTINES_DEBUG_UNLOCK is true). */
+function isValentinesDoorUnlocked() {
+  if (VALENTINES_DEBUG_UNLOCK) return true;
+  const d = new Date();
+  const month = d.getMonth(); // 0 = Jan, 1 = Feb
+  const date = d.getDate();
+  if (month < 1) return false;
+  if (month === 1) return date >= 14;
+  return true;
+}
+
 function hexToRgb(hex) {
   const h = hex.replace("#", "").trim();
   const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
@@ -272,6 +295,12 @@ function openDressToImpress() {
   // Use Roblox game search as a robust link.
   const url = "https://www.roblox.com/discover/?Keyword=Dress%20To%20Impress";
   try { window.open(url, "_blank", "noopener,noreferrer"); } catch {}
+}
+
+function openValentinesMatching() {
+  try {
+    window.location.href = "valentines-matching.html";
+  } catch (_) {}
 }
 
 window.addEventListener("keydown", (e) => {
@@ -604,6 +633,32 @@ function makeTaylorAlbumObjects() {
 
 const objects = [
   makeObject({
+    id: "door",
+    name: "Door",
+    rect: { x: 176, y: 152, w: 32, h: 28 },
+    solid: true,
+    z: 0,
+    onClick: () => {
+      if (isValentinesDoorUnlocked()) {
+        try {
+          window.location.href = "valentines-world.html";
+        } catch (_) {}
+      }
+    },
+    dialogue: () => {
+      if (isValentinesDoorUnlocked()) {
+        return {
+          title: "Door",
+          lines: ["The door is unlocked. Click to enter the Valentine's world!"],
+        };
+      }
+      return {
+        title: "Locked",
+        lines: ["This door is locked until February 14th."],
+      };
+    },
+  }),
+  makeObject({
     id: "diplomaWall",
     name: "Diploma Cave Wall",
     // Click anywhere on the wall area; other objects override this because they're later in the list.
@@ -687,7 +742,7 @@ const objects = [
   makeObject({
     id: "nightstand",
     name: "Nightstand",
-    rect: { x: 124, y: 134, w: 26, h: 26 },
+    rect: { x: 22, y: 98, w: 26, h: 26 },
     solid: true,
     z: 1,
     dialogue: () => ({
@@ -700,7 +755,7 @@ const objects = [
   makeObject({
     id: "poemBook",
     name: "Poem Book",
-    rect: { x: 130, y: 132, w: 14, h: 10 },
+    rect: { x: 26, y: 100, w: 14, h: 10 },
     solid: false,
     z: 2,
     dialogue: () => ({
@@ -740,6 +795,24 @@ const objects = [
     }),
   }),
   makeObject({
+    id: "pomodoroClock",
+    name: "Pomodoro Timer",
+    rect: { x: 232, y: 118, w: 34, h: 44 },
+    solid: true,
+    z: 1,
+    onClick: () => {
+      try {
+        window.location.href = "pomodoro.html";
+      } catch (_) {}
+    },
+    dialogue: () => ({
+      title: "Pomodoro Timer",
+      lines: [
+        "A study timer to help you focus. Click to open the Pomodoro clock.",
+      ],
+    }),
+  }),
+  makeObject({
     id: "arcade",
     name: "Mini Arcade",
     rect: { x: 270, y: 110, w: 34, h: 52 },
@@ -767,6 +840,24 @@ const objects = [
         "She’s patient when you’re overwhelmed and happy when you’re excited.",
         "She loves and lives with her whole heart and makes Megh feel so special..",
         "She deserves all the good things that have ever come her way.",
+      ],
+    }),
+  }),
+  makeObject({
+    id: "valentineHeart",
+    name: "Special Heart",
+    rect: { x: 118, y: 128, w: 36, h: 36 },
+    solid: false,
+    z: 2,
+    onClick: () => {
+      try {
+        window.location.href = "valentines-proposal.html";
+      } catch (_) {}
+    },
+    dialogue: () => ({
+      title: "Special Heart",
+      lines: [
+        "A glowing heart... Click it to open something special.",
       ],
     }),
   }),
@@ -896,6 +987,22 @@ function handlePress(mx, my) {
       }
       if (o.id === "poemBook") {
         openPoemBook();
+        return;
+      }
+      if (o.id === "valentineHeart" && typeof o.onClick === "function") {
+        o.onClick();
+        return;
+      }
+      if (o.id === "pomodoroClock" && typeof o.onClick === "function") {
+        o.onClick();
+        return;
+      }
+      if (o.id === "door") {
+        if (isValentinesDoorUnlocked()) {
+          if (typeof o.onClick === "function") o.onClick();
+        } else {
+          openDialogue("Locked", ["This door is locked until February 14th."]);
+        }
         return;
       }
       if (typeof o.onClick === "function") o.onClick();
@@ -1298,6 +1405,34 @@ function drawAlbumMotif(r, a, t) {
   px(cx - 1, cy + 1, 2, 1, rgba("#ffffff", 0.14));
 }
 
+function drawPomodoroClock(o, t) {
+  const r = o.rect;
+  // Base / stand
+  px(r.x + 4, r.y + r.h - 6, r.w - 8, 4, palette.wood2);
+  px(r.x + 6, r.y + r.h - 4, r.w - 12, 2, palette.ink2);
+  // Clock body (rounded rectangle)
+  px(r.x + 2, r.y + 6, r.w - 4, r.h - 14, palette.ink2);
+  px(r.x + 4, r.y + 8, r.w - 8, r.h - 18, palette.roomWall2);
+  // Face (circle-ish)
+  const cx = r.x + (r.w / 2) | 0;
+  const cy = r.y + 18;
+  const rad = 10;
+  for (let dy = -rad; dy <= rad; dy++) {
+    const w = Math.round(Math.sqrt(Math.max(0, rad * rad - dy * dy)) * 2);
+    px(cx - (w / 2) | 0, cy + dy, w, 1, palette.pillow2);
+  }
+  // Clock hands (simple, time-based for a subtle tick)
+  const angle = (t * 0.0006) % (Math.PI * 2);
+  const hx = cx + Math.round(Math.cos(angle) * 5);
+  const hy = cy + Math.round(Math.sin(angle) * 5);
+  px(cx, cy, 1, 1, palette.ink);
+  px(cx + Math.round((hx - cx) / 2), cy + Math.round((hy - cy) / 2), 1, 1, palette.ink);
+  px(hx, hy, 1, 1, palette.ink);
+  // Center dot
+  px(cx - 1, cy - 1, 2, 2, palette.gold2);
+  px(cx, cy, 1, 1, palette.gold);
+}
+
 function drawArcade(o, t) {
   const r = o.rect;
   // Cabinet
@@ -1355,6 +1490,109 @@ function drawNote(o) {
   px(r.x + 4, r.y + 8, r.w - 8, 1, rgba("#000000", 0.25));
 }
 
+function drawDoor(o) {
+  const r = o.rect;
+  const locked = !isValentinesDoorUnlocked();
+  // Door frame (darker)
+  px(r.x, r.y, r.w, r.h, palette.wood2);
+  px(r.x + 2, r.y + 2, r.w - 4, r.h - 4, palette.wood3);
+  // Door panels
+  px(r.x + 4, r.y + 4, (r.w - 8) / 2, r.h - 8, palette.wood);
+  px(r.x + 4 + (r.w - 8) / 2, r.y + 4, (r.w - 8) / 2, r.h - 8, palette.wood);
+  px(r.x + 5, r.y + 5, (r.w - 10) / 2 - 1, r.h - 10, palette.wood2);
+  px(r.x + 5 + (r.w - 10) / 2 + 1, r.y + 5, (r.w - 10) / 2 - 1, r.h - 10, palette.wood2);
+  // Lock / handle
+  if (locked) {
+    px(r.x + (r.w / 2) - 3, r.y + (r.h / 2) - 2, 6, 6, palette.ink2);
+    px(r.x + (r.w / 2) - 2, r.y + (r.h / 2) - 1, 4, 4, palette.gold2);
+    px(r.x + (r.w / 2) - 1, r.y + (r.h / 2), 2, 2, palette.gold);
+  } else {
+    px(r.x + (r.w / 2) - 2, r.y + (r.h / 2) - 1, 4, 4, palette.gold2);
+    px(r.x + (r.w / 2) - 1, r.y + (r.h / 2), 2, 2, palette.gold);
+  }
+}
+
+// Glowing golden-and-red alternating heart (links to Valentine's proposal).
+function drawValentineHeart(o, t) {
+  const r = o.rect;
+  const phase = Math.sin(t * 0.004);
+  const isGold = phase > 0;
+  const main = isGold ? palette.gold : palette.heart;
+  const main2 = isGold ? palette.gold2 : palette.heart2;
+  const glow = isGold ? rgba("#ffd36b", 0.55) : rgba("#ff7bd1", 0.55);
+  const cx = r.x + (r.w / 2) | 0;
+  const cy = r.y + (r.h / 2) | 0;
+
+  // Little floating hearts around the big heart (orbit + bob)
+  const floatCount = 5;
+  const orbitRadius = 22;
+  const floatBob = 3;
+  for (let i = 0; i < floatCount; i++) {
+    const a = (t * 0.002) + i * (Math.PI * 2 / floatCount);
+    const bob = Math.sin(t * 0.003 + i * 1.2) * floatBob;
+    const fx = Math.round(cx + Math.cos(a) * orbitRadius + bob * 0.5);
+    const fy = Math.round(cy + Math.sin(a) * (orbitRadius * 0.7) + Math.sin(t * 0.005 + i) * floatBob);
+    const fc = (i % 2 === 0) ? palette.heart : palette.gold2;
+    const fc2 = (i % 2 === 0) ? palette.heart2 : palette.gold;
+    px(fx - 1, fy - 1, 1, 1, fc2);
+    px(fx + 1, fy - 1, 1, 1, fc2);
+    px(fx - 2, fy, 4, 1, fc2);
+    px(fx - 2, fy + 1, 4, 1, fc);
+    px(fx - 1, fy + 2, 2, 1, fc2);
+  }
+
+  // Stronger, larger glow
+  px(cx - 8, cy - 6, 16, 14, glow);
+  px(cx - 7, cy - 7, 14, 18, glow);
+  px(cx - 8, cy - 5, 18, 12, glow);
+  // Proper symmetrical pixel heart (two lobes top, point bottom)
+  const h = 2;
+  // Top two bumps (left and right lobes)
+  px(cx - 4 * h, cy - 4 * h, h, h, main2);
+  px(cx - 3 * h, cy - 4 * h, h, h, main2);
+  px(cx + 2 * h, cy - 4 * h, h, h, main2);
+  px(cx + 3 * h, cy - 4 * h, h, h, main2);
+  // Row below bumps (one bar connecting the two lobes)
+  px(cx - 5 * h, cy - 3 * h, h * 10, h, main2);
+  // Widest part (middle)
+  px(cx - 6 * h, cy - 2 * h, h * 12, h, main);
+  px(cx - 6 * h, cy - 1 * h, h * 12, h, main);
+  px(cx - 6 * h, cy, h * 12, h, main);
+  // Taper in
+  px(cx - 5 * h, cy + 1 * h, h * 10, h, main2);
+  px(cx - 4 * h, cy + 2 * h, h * 8, h, main2);
+  px(cx - 3 * h, cy + 3 * h, h * 6, h, main2);
+  // Point at bottom
+  px(cx - 2 * h, cy + 4 * h, h * 4, h, main2);
+  px(cx - 1 * h, cy + 5 * h, h * 2, h, main2);
+
+  // "click me" as pixel-art so it stays crisp when canvas is scaled
+  const tx = cx - 20;
+  const ty = cy - 28;
+  const white = palette.text;
+  const shadow = rgba("#000000", 0.5);
+  // C: 4x5
+  px(tx + 0, ty + 0, 2, 5, white); px(tx + 1, ty + 0, 2, 1, white); px(tx + 1, ty + 4, 2, 1, white);
+  // L: 3x5
+  px(tx + 5, ty + 0, 2, 5, white); px(tx + 5, ty + 4, 3, 1, white);
+  // I: 2x5
+  px(tx + 10, ty + 0, 2, 5, white);
+  // C: 4x5
+  px(tx + 14, ty + 0, 2, 5, white); px(tx + 15, ty + 0, 2, 1, white); px(tx + 15, ty + 4, 2, 1, white);
+  // K: 4x5
+  px(tx + 20, ty + 0, 2, 5, white); px(tx + 22, ty + 0, 2, 1, white); px(tx + 22, ty + 2, 2, 1, white); px(tx + 21, ty + 3, 2, 1, white); px(tx + 22, ty + 4, 2, 1, white);
+  // M: 5x5
+  px(tx + 28, ty + 0, 2, 5, white); px(tx + 32, ty + 0, 2, 5, white); px(tx + 30, ty + 1, 2, 1, white); px(tx + 31, ty + 2, 2, 1, white);
+  // E: 4x5
+  px(tx + 36, ty + 0, 2, 5, white); px(tx + 36, ty + 0, 4, 1, white); px(tx + 36, ty + 2, 3, 1, white); px(tx + 36, ty + 4, 4, 1, white);
+
+  // Arrow pointing down at heart
+  const arrowY = cy - 22;
+  px(cx - 3, arrowY, 6, 1, palette.sparkle);
+  px(cx - 2, arrowY + 1, 4, 1, palette.sparkle);
+  px(cx - 1, arrowY + 2, 2, 1, palette.sparkle);
+}
+
 function drawObject(o, t) {
   if (o.id === "plant") drawPlant(o, t);
   else if (o.id === "photo") drawPhoto(o);
@@ -1365,10 +1603,13 @@ function drawObject(o, t) {
   else if (o.id === "poemBook") drawPoemBookProp(o);
   else if (o.id === "stitch") drawStitch(o, t);
   else if (o.id === "angel") drawAngel(o, t);
+  else if (o.id === "pomodoroClock") drawPomodoroClock(o, t);
   else if (o.id === "arcade") drawArcade(o, t);
   else if (o.album) drawTaylorAlbum(o, t);
   else if (o.id === "plush") drawPlush(o, t);
   else if (o.id === "note") drawNote(o);
+  else if (o.id === "door") drawDoor(o);
+  else if (o.id === "valentineHeart") drawValentineHeart(o, t);
 }
 
 function drawNeyaliSprite(t) {
@@ -1654,13 +1895,19 @@ function drawArcadeMenu(t, v, scrollY) {
   const b1 = { x: bx, y: v.y + y, w: bw, h: bh }; y += bh + gap;
   const b2 = { x: bx, y: v.y + y, w: bw, h: bh }; y += bh + gap;
   const b3 = { x: bx, y: v.y + y, w: bw, h: bh }; y += bh + gap;
-  const b4 = { x: bx, y: v.y + y, w: bw, h: bh }; y += bh + gap + 6;
+  const b4 = { x: bx, y: v.y + y, w: bw, h: bh }; y += bh + gap;
+  let b5 = null;
+  if (valentinesUnlocked()) {
+    b5 = { x: bx, y: v.y + y, w: bw, h: bh }; y += bh + gap;
+  }
+  y += 6;
 
   ctx.fillStyle = rgba(palette.text, 0.90);
   drawButton(b1, "Snake (cute + tiny)", rgba(palette.heart2, 0.85));
   drawButton(b2, "Heart Pop (click hearts)", rgba(palette.rug2, 0.70));
   drawButton(b3, "Butterfly Catch (click butterflies)", rgba(palette.leaf2, 0.70));
   drawButton(b4, "Dress To Impress (Roblox link)", rgba(palette.gold2, 0.75));
+  if (b5) drawButton(b5, "Valentine's Matching (memory game)", rgba("#ff7bd1", 0.85));
 
   // Tip text (scrolls naturally below buttons)
   const tip1 = "Tip: Snake uses arrows/WASD";
@@ -1769,12 +2016,17 @@ function handleArcadeClick(mx, my) {
     const b1 = { x: bx, y: v.y + y, w: bw, h: bh }; y += bh + gap;
     const b2 = { x: bx, y: v.y + y, w: bw, h: bh }; y += bh + gap;
     const b3 = { x: bx, y: v.y + y, w: bw, h: bh }; y += bh + gap;
-    const b4 = { x: bx, y: v.y + y, w: bw, h: bh };
+    const b4 = { x: bx, y: v.y + y, w: bw, h: bh }; y += bh + gap;
+    let b5 = null;
+    if (valentinesUnlocked()) {
+      b5 = { x: bx, y: v.y + y, w: bw, h: bh };
+    }
 
     if (pointInRect(mx, my, b1)) { resetSnake(); setArcadeScreen("snake"); return; }
     if (pointInRect(mx, my, b2)) { resetHeartPop(); setArcadeScreen("heartpop"); return; }
     if (pointInRect(mx, my, b3)) { resetButterfly(); setArcadeScreen("butterfly"); return; }
     if (pointInRect(mx, my, b4)) { openDressToImpress(); return; }
+    if (b5 && pointInRect(mx, my, b5)) { openValentinesMatching(); return; }
     return;
   }
 
@@ -1978,11 +2230,26 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
-// Start.
-openDialogue("Welcome!", [
-  "This little game-type thing is my digital love letter to you",
-  "Click objects around the room to see why I love you so much.",
-  "Move: WASD / Arrows • Click objects • Close dialogue: Space / Esc"
-]);
+// Start. If Neyali said yes to the proposal, show unlock message once when she returns.
+function sawValentinesUnlockMessage() {
+  return getCookie("neyali_saw_valentines_unlock") === "1";
+}
+function setSawValentinesUnlockMessage() {
+  document.cookie = "neyali_saw_valentines_unlock=1; path=/; max-age=31536000";
+}
+if (valentinesUnlocked() && !sawValentinesUnlockMessage()) {
+  setSawValentinesUnlockMessage();
+  openDialogue("A new game unlocked!", [
+    "Because you said yes, a new game has unlocked in the arcade!",
+    "Open the Mini Arcade and try Valentine's Matching — a memory game with a romantic theme."
+  ]);
+} else {
+  openDialogue("Something new is here for you!", [
+    "Something new is here for you in your game, Neyali.",
+    "Explore the room and the arcade to find it.",
+    "",
+    "This little game is my digital love letter to you. Move: WASD / Arrows. Click objects around the room to see why I love you so much. Close dialogue: Space / Esc."
+  ]);
+}
 
 tick();

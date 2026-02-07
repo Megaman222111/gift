@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valentine's Island — Neyali's World</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: #0a0a12;
+      font-family: 'Cormorant Garamond', serif;
+      color: #ffe4ec;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+    .back-link {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 20;
+      color: #ffb6c1;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back-link:hover { text-decoration: underline; }
+    h1 {
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+      text-shadow: 0 0 20px rgba(255, 120, 150, 0.4);
+    }
+    #gameCanvas {
+      display: block;
+      background: #1a1a2e;
+      border: 2px solid rgba(255, 182, 193, 0.3);
+      border-radius: 12px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .ui-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 12px;
+      font-size: 1rem;
+    }
+    .ui-bar span { margin-right: 4px; }
+    .tool-btn {
+      padding: 6px 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: rgba(255, 120, 150, 0.2);
+      border: 1px solid rgba(255, 182, 193, 0.5);
+      border-radius: 8px;
+      color: #ffe4ec;
+      cursor: pointer;
+    }
+    .tool-btn.active { background: rgba(255, 100, 140, 0.5); box-shadow: 0 0 12px rgba(255, 120, 150, 0.4); }
+    .tool-btn:hover { background: rgba(255, 120, 150, 0.3); }
+    .dialogue-box {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 480px;
+      width: calc(100% - 24px);
+      padding: 16px 20px;
+      background: rgba(20, 15, 30, 0.95);
+      border: 2px solid rgba(255, 182, 193, 0.4);
+      border-radius: 12px;
+      display: none;
+      z-index: 15;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+    .dialogue-box.visible { display: block; }
+    .dialogue-box h3 { margin-bottom: 8px; color: #ffb6c1; font-size: 1.1rem; }
+    .dialogue-box p { margin-bottom: 8px; line-height: 1.4; }
+    .dialogue-box .hint { font-size: 0.85rem; opacity: 0.8; }
+    .howToPlay {
+      max-width: 640px;
+      width: 100%;
+      margin-top: 20px;
+      padding: 16px 20px;
+      background: rgba(30, 20, 40, 0.6);
+      border: 1px solid rgba(255, 182, 193, 0.25);
+      border-radius: 12px;
+    }
+    .howToPlay-title { font-size: 1rem; font-weight: 600; margin: 0 0 8px 0; color: #ffb6c1; }
+    .howToPlay-title:not(:first-child) { margin-top: 18px; }
+    .howToPlay-p { margin: 0 0 12px 0; font-size: 0.9rem; line-height: 1.55; color: rgba(255, 228, 236, 0.9); }
+    .howToPlay-list { margin: 0; padding-left: 1.25rem; font-size: 0.9rem; line-height: 1.55; color: rgba(255, 228, 236, 0.9); }
+    .howToPlay-list li { margin-bottom: 6px; }
+    .howToPlay-list kbd { font-family: inherit; padding: 2px 6px; border-radius: 4px; background: rgba(255, 120, 150, 0.2); border: 1px solid rgba(255, 182, 193, 0.3); font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← Back to room</a>
+  <h1>Valentine's Island</h1>
+  <canvas id="gameCanvas" width="640" height="480"></canvas>
+  <div class="ui-bar">
+    <span id="gameClock">Day 1</span>
+    <span>|</span>
+    <span>❤️ <strong id="currency">0</strong> Love Bells</span>
+    <span>|</span>
+    <button type="button" class="tool-btn" data-tool="hand">Hand</button>
+    <button type="button" class="tool-btn" data-tool="net">Net</button>
+    <button type="button" class="tool-btn" data-tool="rod">Fishing Rod</button>
+    <button type="button" class="tool-btn" data-tool="watering">Watering Can</button>
+    <button type="button" class="tool-btn" data-tool="shovel">Shovel</button>
+    <span>|</span>
+    <span id="invLabel">Inventory: <span id="invList">—</span></span>
+  </div>
+
+  <section class="howToPlay" aria-label="Game guide">
+    <h2 class="howToPlay-title">What is this game?</h2>
+    <p class="howToPlay-p">
+      Valentine's Island is a small, cozy exploration game (like Animal Crossing). You're on an island. You walk around, pick up items, catch fish and bugs, dig up fossils, and talk to characters. Everything you collect earns you <strong>Love Bells</strong> (the in-game money). You can donate one of each creature or fossil to the <strong>Museum</strong>. There's no winning or losing — you just explore, collect, and relax. Your progress is saved so you can come back later.
+    </p>
+
+    <h2 class="howToPlay-title">What you see on the island (map)</h2>
+    <ul class="howToPlay-list">
+      <li><strong>Green areas</strong> — Grass. You can walk on it.</li>
+      <li><strong>Brown/tan strips</strong> — Paths. Same as grass, just different look.</li>
+      <li><strong>Blue</strong> — Water. You can't walk on it. Stand at the edge to fish.</li>
+      <li><strong>Beige/tan at the bottom</strong> — Beach. You can walk on it.</li>
+      <li><strong>Brown strip over water</strong> — Bridge. Connects the main island to the beach.</li>
+      <li><strong>Pink/red circles on the ground</strong> — Flowers. Decoration; you can't pick them (use the watering can on them if you like).</li>
+      <li><strong>Dark green with a red/pink blob on top</strong> — Trees. Some have a small pink dot (fruit). Stand next to a tree with fruit, choose Hand, press <kbd>E</kbd> to pick the fruit. Fruit grows back when the day number goes up.</li>
+      <li><strong>Pink/red building (middle-right)</strong> — Your house. You can't go inside in this version; it's just a landmark.</li>
+      <li><strong>Blue building (left side)</strong> — Shop. Walk to it and press <kbd>E</kbd> to see shop info.</li>
+      <li><strong>Dark blue building (top-middle)</strong> — Museum. Blathers stands in front. Talk to him to donate fish, bugs, or fossils you've caught or dug up.</li>
+      <li><strong>Small red hearts, roses, or brown squares</strong> — Collectibles. Walk over them to grab them. They give you Love Bells and go into your inventory.</li>
+      <li><strong>Small red dots moving around</strong> — Bugs. Equip the Net, get close, press <kbd>Space</kbd> or <kbd>F</kbd> to catch one.</li>
+      <li><strong>Brown patches on the ground</strong> — Dig spots. Equip the Shovel, stand on one, press <kbd>E</kbd> to dig. You get a fossil (and Love Bells). The spot disappears.</li>
+      <li><strong>Small characters (pink/peach colored)</strong> — Villagers: <strong>Cupid</strong>, <strong>Rosie</strong>, and <strong>Blathers</strong>. Walk up and press <kbd>E</kbd> to talk. They give tips and Blathers takes donations.</li>
+    </ul>
+
+    <h2 class="howToPlay-title">What the bar under the game means</h2>
+    <ul class="howToPlay-list">
+      <li><strong>Day 1</strong> — In-game day. It goes up slowly over time. When it changes to the next day, fruit on trees comes back.</li>
+      <li><strong>❤️ Love Bells</strong> — Your money. You earn it by collecting items, fishing, catching bugs, digging fossils, and picking fruit.</li>
+      <li><strong>Hand, Net, Fishing Rod, Watering Can, Shovel</strong> — Tools. Click one to select it. Then use <kbd>E</kbd>, <kbd>Space</kbd>, or <kbd>F</kbd> when you're in the right place (at water for fishing, next to a bug for net, on a dig spot for shovel, next to a fruit tree for hand).</li>
+      <li><strong>Inventory</strong> — Shows the last few items you're carrying (hearts, roses, fish, bugs, fossils, fruit). It's a list of what you've picked up; selling or donating happens when you talk to the right character or use the shop.</li>
+    </ul>
+
+    <h2 class="howToPlay-title">How to play (quick)</h2>
+    <ul class="howToPlay-list">
+      <li>Move: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or <kbd>Arrow</kbd> keys.</li>
+      <li>Collect stuff: walk over hearts/roses/chocolates. Pick fruit: Hand + <kbd>E</kbd> next to a tree with a pink dot.</li>
+      <li>Fish: choose Fishing Rod, stand at water, press <kbd>Space</kbd> or <kbd>F</kbd>, wait.</li>
+      <li>Catch bugs: choose Net, get close to a moving red dot, press <kbd>Space</kbd> or <kbd>F</kbd>.</li>
+      <li>Dig fossils: choose Shovel, stand on a brown patch, press <kbd>E</kbd>.</li>
+      <li>Talk: walk to Cupid, Rosie, or Blathers and press <kbd>E</kbd>. At the Museum, Blathers lets you donate one of each fish, bug, and fossil.</li>
+      <li>Close any pop-up: <kbd>Space</kbd> or click the box.</li>
+    </ul>
+
+    <h2 class="howToPlay-title">Mechanics (how things work)</h2>
+    <ul class="howToPlay-list">
+      <li>Love Bells are earned from every collectible, fish, bug, fossil, and fruit. The shop is where you'd spend them (in this version the shop mainly explains the game).</li>
+      <li>The day number increases slowly in real time. When it rolls to the next day, all fruit trees get fruit again.</li>
+      <li>Progress (your bells, inventory, what you've donated, where you are, and the day) is saved in your browser (cookies). If you leave and come back, you'll continue from where you left off.</li>
+    </ul>
+  </section>
+
+  <div class="dialogue-box" id="dialogueBox">
+    <h3 id="dialogueTitle"></h3>
+    <p id="dialogueText"></p>
+    <p class="hint" id="dialogueHint">Press Space or click to close</p>
+  </div>
+
+  <script>
+(function() {
+  var canvas = document.getElementById('gameCanvas');
+  var ctx = canvas.getContext('2d');
+  var TW = 32, TH = 32;
+  var MAP_W = 40, MAP_H = 30;
+  var TILE_GRASS = 0, TILE_PATH = 1, TILE_WATER = 2, TILE_SAND = 3, TILE_FLOWER = 4, TILE_HOUSE = 5, TILE_SHOP = 6, TILE_TREE = 7, TILE_BRIDGE = 8;
+  var map = [];
+  var objects = [];
+  var collectibles = [];
+  var npcs = [];
+  var player = { x: 10 * TW, y: 14 * TH, w: 24, h: 28, vx: 0, vy: 0, speed: 140, facing: 'down', anim: 0 };
+  var keys = {};
+  var currency = 0;
+  var inventory = [];
+  var currentTool = 'hand';
+  var dialogue = { show: false, title: '', text: '', callback: null };
+  var COOKIE_PREFIX = 'vw_';
+  var COOKIE_DAYS = 365;
+  var camera = { x: 0, y: 0 };
+  var CW = canvas.width, CH = canvas.height;
+  var gameTimeMinutes = 8 * 60;
+  var gameDay = 1;
+  var lastSaveUtc = Date.now();
+  var museumDonated = { fish: [], bugs: [], fossils: [] };
+  var fruitTrees = [];
+  var bugs = [];
+  var fishSpots = [];
+  var digSpots = [];
+  var fishing = null;
+  var FISH_NAMES = ['Love Guppy','Heartfish','Cupid Carp','Pink Salmon','Valentine Bass'];
+  var BUG_NAMES = ['Love Bug','Rose Butterfly','Heart Moth','Candy Beetle','Sweet Bee'];
+  var FOSSIL_NAMES = ['Heart Bone','Romance Skull','Kiss Fossil','Cupid Wing'];
+
+  function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function rectOverlap(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+
+  function setCookie(name, value, days) {
+    var expires = '';
+    if (days) {
+      var d = new Date();
+      d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+      expires = '; expires=' + d.toUTCString();
+    }
+    document.cookie = name + '=' + encodeURIComponent(value) + expires + '; path=/; SameSite=Lax';
+  }
+  function getCookie(name) {
+    var parts = ('; ' + document.cookie).split('; ' + name + '=');
+    return parts.length === 2 ? decodeURIComponent(parts[1].split(';')[0]) : '';
+  }
+
+  function saveGame() {
+    try {
+      lastSaveUtc = Date.now();
+      var state = {
+        c: currency,
+        i: inventory,
+        px: player.x, py: player.y,
+        m: map,
+        col: collectibles,
+        gt: gameTimeMinutes,
+        gd: gameDay,
+        lu: lastSaveUtc,
+        mus: museumDonated,
+        ft: fruitTrees,
+        b: bugs,
+        fs: fishSpots,
+        ds: digSpots
+      };
+      var str = JSON.stringify(state);
+      var chunkSize = 3800;
+      for (var i = 0; i < str.length; i += chunkSize) {
+        var chunk = str.slice(i, i + chunkSize);
+        setCookie(COOKIE_PREFIX + (i / chunkSize | 0), chunk, COOKIE_DAYS);
+      }
+      setCookie(COOKIE_PREFIX + 'n', (str.length / chunkSize | 0) + 1, COOKIE_DAYS);
+    } catch (e) {}
+  }
+  function loadGame() {
+    try {
+      var n = parseInt(getCookie(COOKIE_PREFIX + 'n'), 10) || 0;
+      if (n === 0) return;
+      var str = '';
+      for (var j = 0; j < n; j++) str += getCookie(COOKIE_PREFIX + j);
+      var data = JSON.parse(str);
+      currency = data.c != null ? data.c : currency;
+      inventory = data.i || inventory;
+      if (data.px != null) player.x = data.px;
+      if (data.py != null) player.y = data.py;
+      if (data.m && data.m.length) map = data.m;
+      if (data.col) collectibles = data.col;
+      if (data.gt != null) gameTimeMinutes = data.gt;
+      if (data.gd != null) gameDay = data.gd;
+      if (data.lu != null) {
+        var elapsed = (Date.now() - data.lu) / 60000;
+        gameTimeMinutes += Math.floor(elapsed);
+        while (gameTimeMinutes >= 1440) { gameTimeMinutes -= 1440; gameDay++; }
+        while (gameTimeMinutes < 0) { gameTimeMinutes += 1440; gameDay--; }
+      }
+      if (data.mus) museumDonated = data.mus;
+      if (data.ft) fruitTrees = data.ft;
+      if (data.b) bugs = data.b;
+      if (data.fs) fishSpots = data.fs;
+      if (data.ds) digSpots = data.ds;
+    } catch (e) {}
+  }
+
+  function formatClock() {
+    return 'Day ' + gameDay;
+  }
+
+  function buildMap() {
+    if (map.length > 0) return;
+    var w = MAP_W, h = MAP_H;
+    for (var y = 0; y < h; y++) {
+      map[y] = [];
+      for (var x = 0; x < w; x++) {
+        if (y < 2 || y >= h - 2 || x < 2 || x >= w - 2) map[y][x] = TILE_WATER;
+        else if (y >= h - 6 && x >= w/2 - 4 && x <= w/2 + 4) map[y][x] = TILE_SAND;
+        else if (x === 18 && y >= 12 && y <= 16) map[y][x] = TILE_BRIDGE;
+        else if (x === 19 && y >= 12 && y <= 16) map[y][x] = TILE_BRIDGE;
+        else if (x >= 16 && x <= 22 && y >= 8 && y <= 12) map[y][x] = TILE_HOUSE;
+        else if (x >= 4 && x <= 10 && y >= 8 && y <= 12) map[y][x] = TILE_SHOP;
+        else if (x >= 12 && x <= 14 && y >= 4 && y <= 6) map[y][x] = 9;
+        else if ((x === 12 && y === 10) || (x === 28 && y === 14) || (x === 8 && y === 18) || (x === 20 && y === 20) || (x === 30 && y === 10)) map[y][x] = TILE_TREE;
+        else if (randInt(0, 8) === 0 && map[y][x] !== TILE_HOUSE && map[y][x] !== TILE_SHOP && map[y][x] !== 9) map[y][x] = TILE_FLOWER;
+        else map[y][x] = map[y][x] || (randInt(0, 3) === 0 ? TILE_PATH : TILE_GRASS);
+      }
+    }
+    if (fruitTrees.length === 0) {
+      fruitTrees = [
+        { tx: 12, ty: 10, hasFruit: true },
+        { tx: 28, ty: 14, hasFruit: true },
+        { tx: 8, ty: 18, hasFruit: true },
+        { tx: 20, ty: 20, hasFruit: true },
+        { tx: 30, ty: 10, hasFruit: true }
+      ];
+    }
+    if (collectibles.length === 0) {
+      collectibles = [
+        { x: 12 * TW + 8, y: 14 * TH, type: 'heart', w: 16, h: 16 },
+        { x: 20 * TW, y: 10 * TH, type: 'rose', w: 16, h: 16 },
+        { x: 6 * TW, y: 16 * TH, type: 'heart', w: 16, h: 16 },
+        { x: 25 * TW, y: 12 * TH, type: 'chocolate', w: 16, h: 16 },
+        { x: 14 * TW, y: 20 * TH, type: 'rose', w: 16, h: 16 },
+        { x: 30 * TW, y: 16 * TH, type: 'heart', w: 16, h: 16 }
+      ];
+    }
+    if (digSpots.length === 0) {
+      digSpots = [
+        { x: 14 * TW, y: 16 * TH, w: 24, h: 24 },
+        { x: 26 * TW, y: 18 * TH, w: 24, h: 24 },
+        { x: 10 * TW, y: 22 * TH, w: 24, h: 24 }
+      ];
+    }
+    if (bugs.length === 0) spawnBugs();
+    if (fishSpots.length === 0) spawnFishSpots();
+    npcs = [
+      { x: 6 * TW, y: 14 * TH, name: 'Cupid', msg: "Happy Valentine's Day! Catch bugs with your net, fish in the water, and dig fossils with your shovel. Donate to the Museum!", w: 24, h: 28 },
+      { x: 24 * TW, y: 18 * TH, name: 'Rosie', msg: "I'm Rosie! Pick fruit from trees and water flowers. The shop buys everything. Check the Museum to see your donations!", w: 24, h: 28 },
+      { x: 13 * TW, y: 5 * TH, name: 'Blathers', msg: "I'm Blathers! Donate fish, bugs, and fossils here. One of each species, please! I'll display them.", w: 24, h: 28 }
+    ];
+  }
+  var TILE_MUSEUM = 9;
+
+  function spawnBugs() {
+    bugs = [];
+    for (var i = 0; i < 6; i++) {
+      bugs.push({
+        x: randInt(3, 36) * TW + 4,
+        y: randInt(3, 26) * TH + 4,
+        vx: (randInt(0, 1) ? 1 : -1) * 25,
+        vy: (randInt(0, 1) ? 1 : -1) * 25,
+        type: BUG_NAMES[randInt(0, BUG_NAMES.length - 1)],
+        w: 14, h: 14
+      });
+    }
+  }
+  function spawnFishSpots() {
+    fishSpots = [];
+    for (var tx = 2; tx < MAP_W - 2; tx++) {
+      for (var ty = 0; ty < 2; ty++) fishSpots.push({ tx: tx, ty: ty });
+      for (var ty = MAP_H - 2; ty < MAP_H; ty++) fishSpots.push({ tx: tx, ty: ty });
+    }
+  }
+
+  function isSolid(tile) {
+    return tile === TILE_HOUSE || tile === TILE_SHOP || tile === TILE_TREE || tile === TILE_WATER || tile === TILE_MUSEUM;
+  }
+  function getTileAt(px, py) {
+    var tx = Math.floor(px / TW), ty = Math.floor(py / TH);
+    if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) return TILE_WATER;
+    return map[ty][tx];
+  }
+  function canWalk(nx, ny) {
+    var r = { x: nx, y: ny, w: player.w - 4, h: player.h - 4 };
+    var tx1 = Math.floor(nx / TW), ty1 = Math.floor(ny / TH);
+    var tx2 = Math.floor((nx + player.w - 4) / TW), ty2 = Math.floor((ny + player.h - 4) / TH);
+    for (var ty = ty1; ty <= ty2; ty++)
+      for (var tx = tx1; tx <= tx2; tx++) {
+        if (tx < 0 || ty < 0 || tx >= MAP_W || ty >= MAP_H) return false;
+        if (isSolid(map[ty][tx])) return false;
+      }
+    return true;
+  }
+
+  function showDialogue(title, text, cb) {
+    dialogue.show = true;
+    dialogue.title = title;
+    dialogue.text = text;
+    dialogue.callback = cb || null;
+    document.getElementById('dialogueTitle').textContent = title;
+    document.getElementById('dialogueText').textContent = text;
+    document.getElementById('dialogueBox').classList.add('visible');
+  }
+  function closeDialogue() {
+    dialogue.show = false;
+    document.getElementById('dialogueBox').classList.remove('visible');
+    if (dialogue.callback) dialogue.callback();
+  }
+
+  function collect(obj, type) {
+    if (type === 'heart') { currency += 5; inventory.push('Heart'); }
+    if (type === 'rose') { currency += 8; inventory.push('Rose'); }
+    if (type === 'chocolate') { currency += 10; inventory.push('Chocolate'); }
+    var i = collectibles.indexOf(obj);
+    if (i >= 0) collectibles.splice(i, 1);
+    saveGame();
+  }
+
+  function drawTile(tx, ty, tile) {
+    var x = tx * TW, y = ty * TH;
+    if (tile === TILE_GRASS) {
+      ctx.fillStyle = '#2d5a2d';
+      ctx.fillRect(x, y, TW, TH);
+      ctx.fillStyle = '#3a7040';
+      ctx.fillRect(x + 2, y + 2, TW - 4, TH - 4);
+    } else if (tile === TILE_PATH) {
+      ctx.fillStyle = '#8b7355';
+      ctx.fillRect(x, y, TW, TH);
+      ctx.fillStyle = '#a08060';
+      ctx.fillRect(x + 1, y + 1, TW - 2, TH - 2);
+    } else if (tile === TILE_WATER) {
+      ctx.fillStyle = '#1e3a5f';
+      ctx.fillRect(x, y, TW, TH);
+      ctx.fillStyle = '#2a4a7a';
+      ctx.fillRect(x + 2, y + 2, TW - 4, TH - 4);
+    } else if (tile === TILE_SAND) {
+      ctx.fillStyle = '#c4a574';
+      ctx.fillRect(x, y, TW, TH);
+      ctx.fillStyle = '#d4b884';
+      ctx.fillRect(x + 1, y + 1, TW - 2, TH - 2);
+    } else if (tile === TILE_FLOWER) {
+      ctx.fillStyle = '#2d5a2d';
+      ctx.fillRect(x, y, TW, TH);
+      ctx.fillStyle = '#e63950';
+      ctx.beginPath();
+      ctx.arc(x + TW/2, y + TH/2, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ff6b8a';
+      ctx.beginPath();
+      ctx.arc(x + TW/2, y + TH/2, 4, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (tile === TILE_HOUSE) {
+      ctx.fillStyle = '#8b2942';
+      ctx.fillRect(x, y, TW, TH);
+      ctx.fillStyle = '#a63d4a';
+      ctx.fillRect(x + 2, y + 2, TW - 4, TH - 4);
+      ctx.fillStyle = '#ffd89c';
+      ctx.fillRect(x + 10, y + 8, 8, 10);
+    } else if (tile === TILE_SHOP) {
+      ctx.fillStyle = '#2d4a6a';
+      ctx.fillRect(x, y, TW, TH);
+      ctx.fillStyle = '#3a5a7a';
+      ctx.fillRect(x + 2, y + 2, TW - 4, TH - 4);
+      ctx.fillStyle = '#ffd89c';
+      ctx.fillRect(x + 4, y + 6, 6, 8);
+    } else if (tile === TILE_TREE) {
+      var hasFruitHere = fruitTrees.some(function(ft) { return ft.tx === tx && ft.ty === ty && ft.hasFruit; });
+      ctx.fillStyle = '#2d5a2d';
+      ctx.fillRect(x, y, TW, TH);
+      ctx.fillStyle = '#1e4a28';
+      ctx.fillRect(x + 4, y + 4, TW - 8, TH - 8);
+      ctx.fillStyle = '#c9184a';
+      ctx.beginPath();
+      ctx.arc(x + TW/2, y + 10, 10, 0, Math.PI * 2);
+      ctx.fill();
+      if (hasFruitHere) {
+        ctx.fillStyle = '#ff6b8a';
+        ctx.beginPath();
+        ctx.arc(x + TW/2, y + 8, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (tile === TILE_BRIDGE) {
+      ctx.fillStyle = '#5a4a3a';
+      ctx.fillRect(x, y, TW, TH);
+      ctx.fillStyle = '#6b5a4a';
+      ctx.fillRect(x + 2, y + 2, TW - 4, TH - 4);
+    } else if (tile === TILE_MUSEUM) {
+      ctx.fillStyle = '#2d3a5a';
+      ctx.fillRect(x, y, TW, TH);
+      ctx.fillStyle = '#3a4a6a';
+      ctx.fillRect(x + 2, y + 2, TW - 4, TH - 4);
+      ctx.fillStyle = '#ffd89c';
+      ctx.fillRect(x + 8, y + 6, 6, 8);
+    }
+  }
+
+  function drawPlayer() {
+    var x = player.x, y = player.y;
+    ctx.fillStyle = '#ffcca8';
+    ctx.fillRect(x + 4, y + 4, 16, 20);
+    ctx.fillStyle = '#ff7bd1';
+    ctx.fillRect(x + 6, y + 6, 12, 8);
+    ctx.fillStyle = '#2a1b1b';
+    ctx.fillRect(x + 6, y + 2, 12, 6);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(x + 8, y + 10, 2, 2);
+    ctx.fillRect(x + 14, y + 10, 2, 2);
+    ctx.fillStyle = '#ff9bb3';
+    ctx.fillRect(x + 6, y + 12, 2, 2);
+    ctx.fillRect(x + 16, y + 12, 2, 2);
+    if (currentTool === 'net') {
+      ctx.fillStyle = '#4a3a2a';
+      ctx.fillRect(player.facing === 'right' ? x + 20 : x - 8, y + 8, 10, 4);
+    }
+  }
+
+  function drawBugs() {
+    bugs.forEach(function(b) {
+      ctx.fillStyle = '#e63950';
+      ctx.beginPath();
+      ctx.arc(b.x + b.w/2, b.y + b.h/2, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ff6b8a';
+      ctx.beginPath();
+      ctx.arc(b.x + b.w/2 + 2, b.y + b.h/2 - 2, 2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+  function drawDigSpots() {
+    digSpots.forEach(function(d) {
+      ctx.fillStyle = '#5a4a3a';
+      ctx.fillRect(d.x + 4, d.y + 4, d.w - 8, d.h - 8);
+      ctx.fillStyle = '#6b5a4a';
+      ctx.fillRect(d.x + 6, d.y + 6, 4, 4);
+    });
+  }
+  function drawFishing() {
+    if (!fishing) return;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0, 0, MAP_W * TW, MAP_H * TH);
+    ctx.fillStyle = '#ffe4ec';
+    ctx.font = '24px Cormorant Garamond';
+    ctx.textAlign = 'center';
+    ctx.fillText('Fishing...', MAP_W * TW / 2, MAP_H * TH / 2 - 20);
+    ctx.fillText((fishing.t/1000).toFixed(1) + 's', MAP_W * TW / 2, MAP_H * TH / 2 + 10);
+  }
+  function drawCollectibles() {
+    collectibles.forEach(function(c) {
+      if (c.type === 'heart') {
+        ctx.fillStyle = '#e63950';
+        ctx.beginPath();
+        ctx.arc(c.x + c.w/2, c.y + c.h/2, 6, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (c.type === 'rose') {
+        ctx.fillStyle = '#c9184a';
+        ctx.fillRect(c.x + 4, c.y + 6, 8, 6);
+        ctx.fillStyle = '#2d5a2d';
+        ctx.fillRect(c.x + 6, c.y + 10, 4, 6);
+      } else if (c.type === 'chocolate') {
+        ctx.fillStyle = '#4a2a1a';
+        ctx.fillRect(c.x + 2, c.y + 4, 12, 8);
+        ctx.fillStyle = '#6b3a2a';
+        ctx.fillRect(c.x + 4, c.y + 6, 8, 4);
+      }
+    });
+  }
+
+  function drawNPCs() {
+    npcs.forEach(function(npc) {
+      ctx.fillStyle = '#ffb6c1';
+      ctx.fillRect(npc.x + 4, npc.y + 4, 16, 20);
+      ctx.fillStyle = '#ff69b4';
+      ctx.fillRect(npc.x + 6, npc.y + 2, 12, 6);
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(npc.x + 8, npc.y + 8, 2, 2);
+      ctx.fillRect(npc.x + 14, npc.y + 8, 2, 2);
+    });
+  }
+
+  function update(dt) {
+    if (dialogue.show && !fishing) return;
+    var dtSec = dt / 1000;
+    // In-game time: ~1 game minute per 10 real seconds (one full day ≈ 4 hours of play)
+    gameTimeMinutes += dtSec / 10;
+    while (gameTimeMinutes >= 1440) {
+      gameTimeMinutes -= 1440;
+      gameDay++;
+      fruitTrees.forEach(function(ft) { ft.hasFruit = true; });
+    }
+    while (gameTimeMinutes < 0) gameTimeMinutes += 1440;
+
+    if (fishing) {
+      fishing.t -= dt;
+      if (fishing.t <= 0) {
+        var fishName = FISH_NAMES[randInt(0, FISH_NAMES.length - 1)];
+        var worth = randInt(8, 25);
+        currency += worth;
+        inventory.push(fishName);
+        showDialogue('Caught!', 'You caught a ' + fishName + '! (+' + worth + ' Love Bells). Donate it at the Museum (Blathers) if you haven\'t yet!');
+        fishing = null;
+      }
+      return;
+    }
+
+    bugs.forEach(function(b) {
+      b.x += b.vx * dtSec;
+      b.y += b.vy * dtSec;
+      var tx = (b.x / TW) | 0, ty = (b.y / TH) | 0;
+      if (tx < 2 || tx >= MAP_W - 2 || ty < 2 || ty >= MAP_H - 2 || isSolid(map[ty][tx])) {
+        b.vx *= -1;
+        b.vy *= -1;
+      }
+      b.x = clamp(b.x, 2 * TW, (MAP_W - 3) * TW);
+      b.y = clamp(b.y, 2 * TH, (MAP_H - 3) * TH);
+    });
+
+    var vx = 0, vy = 0;
+    if (keys['ArrowLeft'] || keys['a']) vx -= 1;
+    if (keys['ArrowRight'] || keys['d']) vx += 1;
+    if (keys['ArrowUp'] || keys['w']) vy -= 1;
+    if (keys['ArrowDown'] || keys['s']) vy += 1;
+    if (vx !== 0 || vy !== 0) {
+      if (vx !== 0) player.facing = vx > 0 ? 'right' : 'left';
+      else player.facing = vy > 0 ? 'down' : 'up';
+      player.anim += dt * 10;
+      var nx = player.x + vx * player.speed * dtSec;
+      var ny = player.y + vy * player.speed * dtSec;
+      nx = clamp(nx, 0, MAP_W * TW - player.w);
+      ny = clamp(ny, 0, MAP_H * TH - player.h);
+      if (canWalk(nx, player.y)) player.x = nx;
+      if (canWalk(player.x, ny)) player.y = ny;
+    }
+
+    if (currentTool === 'rod' && (keys[' '] || keys['f'])) {
+      var checkX = player.x + player.w / 2, checkY = player.y + player.h - 4;
+      if (player.facing === 'up') checkY = player.y;
+      if (player.facing === 'left') checkX = player.x;
+      if (player.facing === 'right') checkX = player.x + player.w;
+      if (getTileAt(checkX, checkY) === TILE_WATER) {
+        fishing = { t: 2000 + randInt(0, 2000) };
+        keys[' '] = false;
+        keys['f'] = false;
+      }
+    }
+
+    var pr = { x: player.x + 4, y: player.y + 4, w: player.w - 8, h: player.h - 8 };
+    collectibles.slice().forEach(function(c) {
+      var cr = { x: c.x, y: c.y, w: c.w, h: c.h };
+      if (rectOverlap(pr, cr)) { collect(c, c.type); }
+    });
+
+    fruitTrees.forEach(function(ft) {
+      if (!ft.hasFruit) return;
+      var fx = ft.tx * TW + 8, fy = ft.ty * TH + 4, fw = 16, fh = 16;
+      if (rectOverlap(pr, { x: fx, y: fy, w: fw, h: fh }) && currentTool === 'hand' && (keys['e'] || keys['E'])) {
+        ft.hasFruit = false;
+        inventory.push('Love Fruit');
+        currency += 6;
+        keys['e'] = false;
+        keys['E'] = false;
+        saveGame();
+      }
+    });
+
+    digSpots.forEach(function(d) {
+      if (rectOverlap(pr, d) && currentTool === 'shovel' && (keys['e'] || keys['E'])) {
+        var fossil = FOSSIL_NAMES[randInt(0, FOSSIL_NAMES.length - 1)];
+        inventory.push(fossil);
+        currency += 15;
+        digSpots.splice(digSpots.indexOf(d), 1);
+        keys['e'] = false;
+        keys['E'] = false;
+        saveGame();
+      }
+    });
+
+    bugs.slice().forEach(function(b) {
+      var br = { x: b.x, y: b.y, w: b.w, h: b.h };
+      if (currentTool === 'net' && rectOverlap(pr, br) && (keys[' '] || keys['f'])) {
+        currency += 12;
+        inventory.push(b.type);
+        bugs.splice(bugs.indexOf(b), 1);
+        if (bugs.length < 3) spawnBugs();
+        keys[' '] = false;
+        keys['f'] = false;
+        saveGame();
+      }
+    });
+
+    npcs.forEach(function(npc) {
+      var nr = { x: npc.x, y: npc.y, w: npc.w, h: npc.h };
+      if (!rectOverlap(pr, nr) || !(keys['e'] || keys['E'])) return;
+      keys['e'] = false;
+      keys['E'] = false;
+      if (npc.name === 'Blathers') {
+        var canDonate = [];
+        inventory.forEach(function(item) {
+          if (FISH_NAMES.indexOf(item) >= 0 && museumDonated.fish.indexOf(item) === -1) canDonate.push({ type: 'fish', name: item });
+          if (BUG_NAMES.indexOf(item) >= 0 && museumDonated.bugs.indexOf(item) === -1) canDonate.push({ type: 'bug', name: item });
+          if (FOSSIL_NAMES.indexOf(item) >= 0 && museumDonated.fossils.indexOf(item) === -1) canDonate.push({ type: 'fossil', name: item });
+        });
+        if (canDonate.length === 0) {
+          showDialogue('Blathers', "No new donations today! Bring me fish, bugs, or fossils I don't have yet.");
+        } else {
+          var d = canDonate[0];
+          if (d.type === 'fish') museumDonated.fish.push(d.name);
+          if (d.type === 'bug') museumDonated.bugs.push(d.name);
+          if (d.type === 'fossil') museumDonated.fossils.push(d.name);
+          inventory.splice(inventory.indexOf(d.name), 1);
+          showDialogue('Blathers', "Thank you! I've added the " + d.name + " to the museum. Wonderful!");
+          saveGame();
+        }
+      } else {
+        showDialogue(npc.name, npc.msg);
+      }
+    });
+
+    var shopX = 6 * TW, shopY = 10 * TH, shopW = 7 * TW, shopH = 5 * TH;
+    if (player.x + player.w > shopX && player.x < shopX + shopW && player.y + player.h > shopY && player.y < shopY + shopH + 40) {
+      if (keys['e'] || keys['E']) {
+        showDialogue('Valentine Shop', 'Sell items by collecting them! Buy: Net 50 bells, Rod 80, Watering Can 40, Shovel 60. You have ' + currency + ' Love Bells. Tools are already yours!');
+        keys['e'] = false;
+        keys['E'] = false;
+      }
+    }
+  }
+
+  function draw() {
+    ctx.imageSmoothingEnabled = false;
+    camera.x = player.x - CW/2 + player.w/2;
+    camera.y = player.y - CH/2 + player.h/2;
+    camera.x = clamp(camera.x, 0, Math.max(0, MAP_W * TW - CW));
+    camera.y = clamp(camera.y, 0, Math.max(0, MAP_H * TH - CH));
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+    for (var ty = 0; ty < MAP_H; ty++)
+      for (var tx = 0; tx < MAP_W; tx++)
+        drawTile(tx, ty, map[ty][tx]);
+    drawDigSpots();
+    drawCollectibles();
+    drawBugs();
+    drawNPCs();
+    drawPlayer();
+    drawFishing();
+    ctx.restore();
+  }
+
+  var lastSave = 0;
+  function gameLoop(t) {
+    update(16);
+    draw();
+    document.getElementById('gameClock').textContent = formatClock();
+    document.getElementById('currency').textContent = currency;
+    document.getElementById('invList').textContent = inventory.length ? inventory.slice(-5).join(', ') : '—';
+    if (t - lastSave > 10000) { saveGame(); lastSave = t; }
+    requestAnimationFrame(gameLoop);
+  }
+  function ensureWorldState() {
+    if (fruitTrees.length === 0) {
+      fruitTrees = [
+        { tx: 12, ty: 10, hasFruit: true }, { tx: 28, ty: 14, hasFruit: true },
+        { tx: 8, ty: 18, hasFruit: true }, { tx: 20, ty: 20, hasFruit: true }, { tx: 30, ty: 10, hasFruit: true }
+      ];
+    }
+    if (digSpots.length === 0) {
+      digSpots = [
+        { x: 14 * TW, y: 16 * TH, w: 24, h: 24 },
+        { x: 26 * TW, y: 18 * TH, w: 24, h: 24 },
+        { x: 10 * TW, y: 22 * TH, w: 24, h: 24 }
+      ];
+    }
+    if (bugs.length === 0) spawnBugs();
+    if (fishSpots.length === 0) spawnFishSpots();
+  }
+
+  window.addEventListener('keydown', function(e) {
+    keys[e.key] = true;
+    if (e.key === ' ' && dialogue.show) { e.preventDefault(); closeDialogue(); }
+  });
+  window.addEventListener('keyup', function(e) { keys[e.key] = false; });
+  document.getElementById('dialogueBox').addEventListener('click', function() {
+    if (dialogue.show) closeDialogue();
+  });
+  document.querySelectorAll('.tool-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tool-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentTool = btn.dataset.tool;
+    });
+  });
+
+  loadGame();
+  buildMap();
+  ensureWorldState();
+  document.querySelector('.tool-btn[data-tool="hand"]').classList.add('active');
+  requestAnimationFrame(gameLoop);
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pomodoro Timer — Study Focus</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(165deg, #0a0e1a 0%, #0d1326 25%, #0a0f1c 50%, #060a12 100%);
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 10;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .back-link:hover { color: #cbd5e1; }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(8, 12, 24, 0.98) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                  0 0 0 1px rgba(30, 58, 138, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      padding: 2rem;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 1.5rem;
+    }
+
+    .mode-tabs {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    .mode-tabs button {
+      padding: 0.5rem 1rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #64748b;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: color 0.2s, background 0.2s, border-color 0.2s;
+    }
+    .mode-tabs button:hover {
+      color: #94a3b8;
+      background: rgba(30, 41, 59, 0.9);
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+    .mode-tabs button.active {
+      color: #3b82f6;
+      background: rgba(59, 130, 246, 0.12);
+      border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .timer-ring {
+      width: 240px;
+      height: 240px;
+      margin: 0 auto 1.5rem;
+      border-radius: 50%;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(8, 12, 24, 0.99));
+      border: 3px solid rgba(30, 58, 138, 0.4);
+      box-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.4),
+                  0 0 40px rgba(59, 130, 246, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .timer-ring::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), transparent 50%, rgba(59, 130, 246, 0.1));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .timer-display {
+      font-size: 3.25rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #f1f5f9;
+      text-shadow: 0 0 40px rgba(59, 130, 246, 0.2);
+      font-variant-numeric: tabular-nums;
+    }
+    .timer-display.paused { opacity: 0.85; color: #94a3b8; }
+
+    .timer-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #64748b;
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .controls button {
+      padding: 0.75rem 1.5rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      border: none;
+    }
+    .btn-start {
+      background: linear-gradient(180deg, #3b82f6, #2563eb);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    }
+    .btn-start:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+    }
+    .btn-pause {
+      background: linear-gradient(180deg, #475569, #334155);
+      color: #e2e8f0;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+    .btn-pause:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+    .btn-reset {
+      background: transparent;
+      color: #94a3b8;
+      border: 1px solid rgba(71, 85, 105, 0.6);
+    }
+    .btn-reset:hover {
+      color: #cbd5e1;
+      border-color: rgba(100, 116, 139, 0.8);
+      transform: translateY(-1px);
+    }
+
+    .progress-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      transform: rotate(-90deg);
+      pointer-events: none;
+    }
+    .progress-ring circle {
+      fill: none;
+      stroke: rgba(59, 130, 246, 0.35);
+      stroke-width: 3;
+      transition: stroke-dashoffset 0.3s linear;
+    }
+    .progress-ring .progress {
+      stroke: #3b82f6;
+      stroke-linecap: round;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← Back to game</a>
+
+  <div class="container">
+    <h1>Pomodoro Timer</h1>
+    <div class="mode-tabs">
+      <button type="button" data-mode="focus" class="active">Focus</button>
+      <button type="button" data-mode="shortBreak">Short break</button>
+      <button type="button" data-mode="longBreak">Long break</button>
+    </div>
+
+    <div class="timer-ring">
+      <svg class="progress-ring" width="240" height="240">
+        <circle cx="120" cy="120" r="114"/>
+        <circle class="progress" id="progressCircle" cx="120" cy="120" r="114" stroke-dasharray="715" stroke-dashoffset="0"/>
+      </svg>
+      <div>
+        <div class="timer-display" id="display">25:00</div>
+        <div class="timer-label" id="modeLabel">Focus time</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button type="button" class="btn-start" id="startBtn">Start</button>
+      <button type="button" class="btn-pause" id="pauseBtn" style="display:none;">Pause</button>
+      <button type="button" class="btn-reset" id="resetBtn">Reset</button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var DURATIONS = { focus: 25 * 60, shortBreak: 5 * 60, longBreak: 15 * 60 };
+      var LABELS = { focus: 'Focus time', shortBreak: 'Short break', longBreak: 'Long break' };
+      var circumference = 2 * Math.PI * 114;
+
+      var display = document.getElementById('display');
+      var modeLabel = document.getElementById('modeLabel');
+      var progressCircle = document.getElementById('progressCircle');
+      var startBtn = document.getElementById('startBtn');
+      var pauseBtn = document.getElementById('pauseBtn');
+      var resetBtn = document.getElementById('resetBtn');
+      var modeBtns = document.querySelectorAll('.mode-tabs button');
+
+      var mode = 'focus';
+      var remaining = DURATIONS.focus;
+      var total = DURATIONS.focus;
+      var timerId = null;
+      var isRunning = false;
+
+      function setMode(m) {
+        mode = m;
+        total = DURATIONS[mode];
+        remaining = total;
+        modeLabel.textContent = LABELS[mode];
+        modeBtns.forEach(function(btn) {
+          btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+        updateDisplay();
+        updateProgress();
+      }
+
+      function formatTime(sec) {
+        var m = Math.floor(sec / 60);
+        var s = sec % 60;
+        return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+      }
+
+      function updateDisplay() {
+        display.textContent = formatTime(remaining);
+        display.classList.toggle('paused', !isRunning && remaining < total);
+      }
+
+      function updateProgress() {
+        var offset = circumference - (remaining / total) * circumference;
+        progressCircle.setAttribute('stroke-dasharray', circumference);
+        progressCircle.setAttribute('stroke-dashoffset', offset);
+      }
+
+      function tick() {
+        if (remaining <= 0) {
+          clearInterval(timerId);
+          timerId = null;
+          isRunning = false;
+          startBtn.style.display = '';
+          pauseBtn.style.display = 'none';
+          remaining = 0;
+          updateDisplay();
+          updateProgress();
+          return;
+        }
+        remaining--;
+        updateDisplay();
+        updateProgress();
+      }
+
+      function start() {
+        if (timerId) return;
+        isRunning = true;
+        startBtn.style.display = 'none';
+        pauseBtn.style.display = '';
+        display.classList.remove('paused');
+        timerId = setInterval(tick, 1000);
+      }
+
+      function pause() {
+        if (!timerId) return;
+        clearInterval(timerId);
+        timerId = null;
+        isRunning = false;
+        startBtn.style.display = '';
+        pauseBtn.style.display = 'none';
+        display.classList.add('paused');
+      }
+
+      function reset() {
+        pause();
+        remaining = total;
+        updateDisplay();
+        updateProgress();
+      }
+
+      startBtn.addEventListener('click', start);
+      pauseBtn.addEventListener('click', pause);
+      resetBtn.addEventListener('click', reset);
+      modeBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          if (timerId) pause();
+          setMode(btn.dataset.mode);
+        });
+      });
+
+      setMode('focus');
+    })();
+  </script>
+</body>
+</html>

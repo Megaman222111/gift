@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Will you be my Valentine, Neyali?</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;   
+      background: radial-gradient(ellipse at center, #1a0a0f 0%, #0d0308 50%, #050204 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    /* Subtle floating particles */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(255, 100, 120, 0.4);
+      border-radius: 50%;
+      animation: float 8s ease-in-out infinite;
+    }
+    .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .particle:nth-child(2) { left: 20%; animation-delay: 1.5s; }
+    .particle:nth-child(3) { left: 30%; animation-delay: 3s; }
+    .particle:nth-child(4) { left: 70%; animation-delay: 2s; }
+    .particle:nth-child(5) { left: 80%; animation-delay: 4s; }
+    .particle:nth-child(6) { left: 90%; animation-delay: 0.5s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.4; }
+      90% { opacity: 0.4; }
+      100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+    }
+
+    .container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      z-index: 1;
+    }
+
+    /* Glow layers behind the heart */
+    .heart-glow-outer {
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        rgba(255, 50, 80, 0.35) 0%,
+        rgba(200, 30, 60, 0.2) 40%,
+        transparent 70%
+      );
+      animation: glow-pulse 0.9s ease-in-out infinite;
+    }
+
+    .heart-glow-mid {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        rgba(255, 80, 100, 0.5) 0%,
+        rgba(255, 40, 70, 0.25) 50%,
+        transparent 70%
+      );
+      animation: glow-pulse 0.9s ease-in-out infinite 0.05s;
+    }
+
+    .heart-wrapper {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 0 35px rgba(255, 60, 90, 0.7))
+              drop-shadow(0 0 70px rgba(255, 40, 70, 0.5));
+    }
+
+    .heart {
+      width: 140px;
+      height: 130px;
+      animation: beat 0.9s ease-in-out infinite;
+      transform-origin: center center;
+    }
+
+    .heart svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 15px rgba(255, 80, 110, 0.8));
+    }
+
+    .heart-shape {
+      fill: url(#heartGradient);
+    }
+
+    .heart-highlight {
+      fill: url(#highlightGradient);
+      opacity: 0.5;
+    }
+
+    .heart-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 600;
+      fill: rgba(255, 255, 255, 0.95);
+      text-anchor: middle;
+      dominant-baseline: central;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+      pointer-events: none;
+    }
+
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      14% { transform: scale(1.12); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.08); }
+      56% { transform: scale(1); }
+      70% { transform: scale(1.05); }
+      84% { transform: scale(1); }
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.85; }
+    }
+
+    .message {
+      text-align: center;
+      color: rgba(255, 220, 230, 0.95);
+      max-width: 320px;
+    }
+
+    .message h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 20px rgba(255, 100, 130, 0.4);
+    }
+
+    .message p {
+      font-size: 1.25rem;
+      font-style: italic;
+      font-weight: 400;
+      opacity: 0.9;
+    }
+
+    /* No button - top right corner */
+    .no-btn {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(20, 25, 45, 0.85);
+      border: 1px solid rgba(80, 100, 150, 0.3);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: rgba(150, 170, 220, 0.9);
+      text-shadow: 0 0 12px rgba(60, 100, 180, 0.5);
+      box-shadow: 0 0 25px rgba(50, 80, 150, 0.25);
+    }
+    .no-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 35px rgba(60, 100, 180, 0.4);
+    }
+    .no-btn:active {
+      transform: scale(0.98);
+    }
+    .sad-face-wrapper {
+      width: 48px;
+      height: 48px;
+      filter: drop-shadow(0 0 12px rgba(60, 100, 180, 0.7))
+              drop-shadow(0 0 25px rgba(40, 70, 140, 0.4));
+    }
+    .sad-face-wrapper svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Yes button - whole heart is clickable */
+    .yes-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    .yes-btn:hover .heart { animation-duration: 0.6s; }
+
+    /* Proposal page - can fade out */
+    .proposal-page {
+      transition: opacity 0.8s ease-out;
+    }
+    .proposal-page.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Celebration layer - sparkles and hearts (shown on yes) */
+    .celebration-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.4s ease-out;
+    }
+    .celebration-layer.active {
+      opacity: 1;
+    }
+    .celebration-particle {
+      position: absolute;
+      pointer-events: none;
+      animation: celebrate-out 2.5s ease-out forwards;
+    }
+    .celebration-particle.sparkle {
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(circle, #fff 30%, rgba(255,200,220,0.9) 70%, transparent);
+      border-radius: 50%;
+      box-shadow: 0 0 12px #fff, 0 0 20px rgba(255,180,200,0.8);
+    }
+    .celebration-particle.heart-float {
+      font-size: 24px;
+      opacity: 0.9;
+      filter: drop-shadow(0 0 8px rgba(255,80,120,0.8));
+    }
+    @keyframes celebrate-out {
+      0% { transform: scale(0) rotate(0deg); opacity: 1; }
+      20% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+      100% { transform: scale(1) rotate(360deg); opacity: 0.7; }
+    }
+
+    /* Thank you page (shown after yes) */
+    .thank-you-page {
+      position: fixed;
+      inset: 0;
+      z-index: 8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at center, #1a0a0f 0%, #0d0308 50%, #050204 100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.9s ease-out;
+    }
+    .thank-you-page.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .thank-you-page h2 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: rgba(255, 220, 230, 0.98);
+      text-shadow: 0 0 30px rgba(255, 100, 130, 0.5);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.04em;
+    }
+    .thank-you-page p {
+      font-size: 1.5rem;
+      font-style: italic;
+      color: rgba(255, 200, 220, 0.95);
+    }
+
+    /* Sad faces layer (shown on no) - above no-overlay so they stay visible */
+    .sad-faces-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 7;
+      opacity: 0;
+      transition: opacity 0.6s ease-out;
+    }
+    .sad-faces-layer.active {
+      opacity: 1;
+    }
+    .sad-face-float {
+      position: absolute;
+      font-size: 32px;
+      opacity: 0.75;
+      animation: sad-float 4s ease-in-out infinite;
+      filter: drop-shadow(0 0 10px rgba(60, 100, 180, 0.5));
+    }
+    @keyframes sad-float {
+      0%, 100% { transform: translate(-50%, -50%) translateY(0) rotate(-5deg); }
+      50% { transform: translate(-50%, -50%) translateY(-8px) rotate(5deg); }
+    }
+
+    /* No overlay: "you suck, try again" + reset */
+    .no-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 6;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 15, 30, 0.88);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease-out;
+    }
+    .no-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .no-overlay h2 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: rgba(180, 190, 220, 0.95);
+      text-shadow: 0 0 20px rgba(80, 100, 160, 0.4);
+      margin-bottom: 1rem;
+      letter-spacing: 0.02em;
+    }
+    .no-overlay .try-again-btn {
+      padding: 0.6rem 1.5rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: rgba(255, 220, 230, 0.95);
+      background: rgba(180, 80, 100, 0.35);
+      border: 1px solid rgba(255, 120, 150, 0.5);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 20px rgba(200, 80, 120, 0.3);
+    }
+    .no-overlay .try-again-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 28px rgba(200, 80, 120, 0.45);
+    }
+  </style>
+</head>
+<body>
+  <button type="button" class="no-btn" id="noBtn" aria-label="No">
+    <span class="sad-face-wrapper">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="faceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4a6fa5"/>
+            <stop offset="30%" style="stop-color:#3d5a8c"/>
+            <stop offset="70%" style="stop-color:#2d4570"/>
+            <stop offset="100%" style="stop-color:#1e2d4a"/>
+          </linearGradient>
+          <linearGradient id="faceHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:rgba(255,255,255,0.15)"/>
+            <stop offset="100%" style="stop-color:transparent"/>
+          </linearGradient>
+          <filter id="sadGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feFlood flood-color="#3d5a8c" flood-opacity="0.6"/>
+            <feComposite in2="blur" operator="in"/>
+            <feMerge>
+              <feMergeNode/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <!-- Face circle with gloomy blue -->
+        <circle cx="32" cy="32" r="30" fill="url(#faceGradient)" filter="url(#sadGlow)"/>
+        <circle cx="32" cy="32" r="30" fill="url(#faceHighlight)" opacity="0.6"/>
+        <!-- Sad downturned eyebrows -->
+        <path d="M 16 24 Q 24 22 28 24" stroke="#1e2d4a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <path d="M 36 24 Q 44 22 48 24" stroke="#1e2d4a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <!-- Sad half-closed eyes -->
+        <path d="M 18 28 Q 24 32 30 28" stroke="#1a2540" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M 34 28 Q 40 32 46 28" stroke="#1a2540" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <!-- Single tear -->
+        <path d="M 20 34 Q 21 42 20 48 Q 22 46 24 44 Q 22 36 20 34 Z" fill="rgba(180, 200, 255, 0.85)"/>
+        <!-- Deep downturned sad mouth -->
+        <path d="M 20 48 Q 32 58 44 48" stroke="#0f1520" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+        <path d="M 20 48 Q 32 55 44 48" stroke="#2d3a5c" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6"/>
+      </svg>
+    </span>
+    <span>no</span>
+  </button>
+
+  <div class="particles">
+    <span class="particle"></span>
+    <span class="particle"></span>
+    <span class="particle"></span>
+    <span class="particle"></span>
+    <span class="particle"></span>
+    <span class="particle"></span>
+  </div>
+
+  <!-- Celebration overlay (sparkles + hearts) -->
+  <div class="celebration-layer" id="celebrationLayer"></div>
+
+  <!-- Thank you page (after yes) -->
+  <div class="thank-you-page" id="thankYouPage">
+    <h2>Thank you, I love you Neyali</h2>
+    <p>Taking you back to the game...</p>
+  </div>
+
+  <!-- Sad faces overlay (on no) -->
+  <div class="sad-faces-layer" id="sadFacesLayer"></div>
+
+  <!-- No overlay: you suck, try again -->
+  <div class="no-overlay" id="noOverlay">
+    <h2>You suck. BOOOOOOOOOOO, try again</h2>
+    <button type="button" class="try-again-btn" id="tryAgainBtn">Try again</button>
+  </div>
+
+  <div class="proposal-page" id="proposalPage">
+  <div class="container">
+    <div class="heart-glow-outer"></div>
+    <div class="heart-glow-mid"></div>
+    <button type="button" class="yes-btn heart-wrapper" id="yesBtn" aria-label="Yes">
+      <div class="heart">
+        <svg viewBox="0 0 140 130" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#ff4d6a"/>
+              <stop offset="25%" style="stop-color:#e63950"/>
+              <stop offset="50%" style="stop-color:#c9183a"/>
+              <stop offset="75%" style="stop-color:#a4161a"/>
+              <stop offset="100%" style="stop-color:#7a0a0a"/>
+            </linearGradient>
+            <linearGradient id="highlightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#fff;stop-opacity:0.6"/>
+              <stop offset="50%" style="stop-color:#ff8090;stop-opacity:0.2"/>
+              <stop offset="100%" style="stop-color:transparent"/>
+            </linearGradient>
+          </defs>
+          <!-- Realistic heart path (organic, anatomical-inspired curves) -->
+          <path class="heart-shape" d="
+            M 70 118
+            C 70 118 10 75 10 45
+            C 10 28 22 18 38 18
+            C 50 18 58 25 70 38
+            C 82 25 90 18 102 18
+            C 118 18 130 28 130 45
+            C 130 75 70 118 70 118
+            Z
+          "/>
+          <!-- Subtle highlight on upper left lobe -->
+          <path class="heart-highlight" d="
+            M 38 28
+            C 32 32 28 42 30 52
+            C 35 45 45 35 55 32
+            C 48 28 40 26 38 28
+            Z
+          "/>
+          <text class="heart-label" x="70" y="72">yes</text>
+        </svg>
+      </div>
+    </button>
+    <div class="message">
+      <h1>Will you be my Valentine?</h1>
+      <p>You have my whole heart.</p>
+    </div>
+  </div>
+  </div>
+
+  <script>
+    (function() {
+      var celebrationLayer = document.getElementById('celebrationLayer');
+      var thankYouPage = document.getElementById('thankYouPage');
+      var sadFacesLayer = document.getElementById('sadFacesLayer');
+      var proposalPage = document.getElementById('proposalPage');
+      var yesBtn = document.getElementById('yesBtn');
+      var noBtn = document.getElementById('noBtn');
+      var noOverlay = document.getElementById('noOverlay');
+      var tryAgainBtn = document.getElementById('tryAgainBtn');
+
+      var heartEmoji = '❤️';
+      var sadEmoji = '😢';
+
+      function createCelebration() {
+        celebrationLayer.classList.add('active');
+        celebrationLayer.innerHTML = '';
+        var count = 80;
+        for (var i = 0; i < count; i++) {
+          var el = document.createElement('div');
+          el.className = 'celebration-particle ' + (i % 3 === 0 ? 'heart-float' : 'sparkle');
+          if (i % 3 === 0) {
+            el.textContent = heartEmoji;
+            el.style.left = Math.random() * 100 + '%';
+            el.style.top = Math.random() * 100 + '%';
+            el.style.animationDelay = (Math.random() * 0.5) + 's';
+          } else {
+            el.style.left = Math.random() * 100 + '%';
+            el.style.top = Math.random() * 100 + '%';
+            el.style.animationDelay = (Math.random() * 0.3) + 's';
+          }
+          celebrationLayer.appendChild(el);
+        }
+      }
+
+      function showThankYou() {
+        proposalPage.classList.add('hidden');
+        setTimeout(function() {
+          thankYouPage.classList.add('visible');
+        }, 200);
+      }
+
+      function setValentinesYesCookie() {
+        document.cookie = 'neyali_valentines_yes=1; path=/; max-age=31536000';
+      }
+
+      yesBtn.addEventListener('click', function() {
+        yesBtn.disabled = true;
+        noBtn.style.visibility = 'hidden';
+        setValentinesYesCookie();
+        createCelebration();
+        setTimeout(showThankYou, 2400);
+        // After showing "Thank you, I love you", redirect back to the game.
+        setTimeout(function() {
+          window.location.href = 'index.html';
+        }, 5000);
+      });
+
+      function createSadFaces() {
+        sadFacesLayer.classList.add('active');
+        sadFacesLayer.innerHTML = '';
+        var i, x, y, side, el;
+        for (i = 0; i < 50; i++) {
+          side = Math.floor(Math.random() * 4);
+          if (side === 0) { x = Math.random() * 8; y = Math.random() * 100; }
+          else if (side === 1) { x = 92 + Math.random() * 8; y = Math.random() * 100; }
+          else if (side === 2) { x = Math.random() * 100; y = Math.random() * 8; }
+          else { x = Math.random() * 100; y = 92 + Math.random() * 8; }
+          el = document.createElement('div');
+          el.className = 'sad-face-float';
+          el.textContent = sadEmoji;
+          el.style.left = x + '%';
+          el.style.top = y + '%';
+          el.style.animationDelay = (Math.random() * 2) + 's';
+          el.style.fontSize = (28 + Math.random() * 20) + 'px';
+          sadFacesLayer.appendChild(el);
+        }
+      }
+
+      noBtn.addEventListener('click', function() {
+        noBtn.style.visibility = 'hidden';
+        createSadFaces();
+        noOverlay.classList.add('visible');
+      });
+
+      tryAgainBtn.addEventListener('click', function() {
+        noOverlay.classList.remove('visible');
+        noBtn.style.visibility = '';
+        proposalPage.classList.remove('hidden');
+      });
+    })();
+  </script>
+</body>
+</html>

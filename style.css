@@ -75,3 +75,34 @@ canvas{
   outline:1px solid rgba(255,255,255,0.10);
   background: #0c122a;
 }
+
+.howToPlay{
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:14px;
+  padding:16px 20px;
+}
+.howToPlay-title{
+  font-size:1rem;
+  font-weight:700;
+  letter-spacing:0.02em;
+  margin:0 0 8px 0;
+  color:var(--ink);
+}
+.howToPlay-title:not(:first-child){ margin-top:20px; }
+.howToPlay-list{
+  margin:0;
+  padding-left:1.25rem;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.5;
+}
+.howToPlay-list li{ margin-bottom:6px; }
+.howToPlay-list kbd{
+  font-family:inherit;
+  font-size:0.85em;
+  padding:1px 5px;
+  border-radius:4px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.12);
+}
